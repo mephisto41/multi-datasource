@@ -1,0 +1,24 @@
+app:
+  auto-heal-delay-ms: 60000
+  datasources:
+    primary:
+      url: jdbc:h2:mem:primarydb;DB_CLOSE_DELAY=-1
+      username: sa
+      password:
+      driver-class-name: org.h2.Driver
+      validation-query: SELECT 1
+      maximum-pool-size: 5
+    reporting:
+      url: jdbc:h2:mem:reportingdb;DB_CLOSE_DELAY=-1
+      username: sa
+      password:
+      driver-class-name: org.h2.Driver
+      validation-query: SELECT 1
+      maximum-pool-size: 5
+    analytics:
+      url: jdbc:h2:mem:analyticsdb;DB_CLOSE_DELAY=-1
+      username: sa
+      password:
+      driver-class-name: org.h2.Driver
+      validation-query: SELECT 1
+      maximum-pool-size: 5

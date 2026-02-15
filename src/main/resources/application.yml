@@ -1,0 +1,24 @@
+app:
+  auto-heal-delay-ms: 5000
+  datasources:
+    primary:
+      url: jdbc:postgresql://localhost:5432/app
+      username: app
+      password: app
+      driver-class-name: org.postgresql.Driver
+      validation-query: SELECT 1
+      maximum-pool-size: 10
+    reporting:
+      url: jdbc:mysql://localhost:3306/reporting
+      username: report
+      password: report
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      validation-query: SELECT 1
+      maximum-pool-size: 5
+    analytics:
+      url: jdbc:sqlserver://localhost:1433;databaseName=analytics;encrypt=false
+      username: analytics
+      password: analytics
+      driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+      validation-query: SELECT 1
+      maximum-pool-size: 8
