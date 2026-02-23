@@ -5,9 +5,13 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Objects;
 import java.util.SequencedMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
 
 public class HealingRoutingDataSource extends AbstractRoutingDataSource {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(HealingRoutingDataSource.class);
 
     private final SequencedMap<String, ManagedDataSource> datasources;
 
@@ -31,23 +35,51 @@ public class HealingRoutingDataSource extends AbstractRoutingDataSource {
 
     @Override
     public Connection getConnection() throws SQLException {
-        try {
-            return super.getConnection();
-        } catch (IllegalStateException ex) {
-            throw noHealthyDatasourceException(ex);
-        }
+        return getConnectionWithOnDemandHeal(this::getConnectionInternal);
     }
 
     @Override
     public Connection getConnection(String username, String password) throws SQLException {
+        return getConnectionWithOnDemandHeal(() -> getConnectionInternal(username, password));
+    }
+
+    private Connection getConnectionWithOnDemandHeal(ConnectionSupplier supplier) throws SQLException {
         try {
-            return super.getConnection(username, password);
+            return supplier.get();
         } catch (IllegalStateException ex) {
-            throw noHealthyDatasourceException(ex);
+            healAllDatasources();
+            try {
+                return supplier.get();
+            } catch (IllegalStateException retryEx) {
+                throw noHealthyDatasourceException(retryEx);
+            }
+        }
+    }
+
+    private Connection getConnectionInternal() throws SQLException {
+        return super.getConnection();
+    }
+
+    private Connection getConnectionInternal(String username, String password) throws SQLException {
+        return super.getConnection(username, password);
+    }
+
+    private void healAllDatasources() {
+        for (ManagedDataSource dataSource : datasources.values()) {
+            try {
+                dataSource.healIfNeeded();
+            } catch (Exception ex) {
+                LOGGER.warn("On-demand heal failed for datasource {}", dataSource.getName(), ex);
+            }
         }
     }
 
     private static SQLException noHealthyDatasourceException(IllegalStateException cause) {
         return new SQLException("No healthy datasource available", cause);
+    }
+
+    @FunctionalInterface
+    private interface ConnectionSupplier {
+        Connection get() throws SQLException;
     }
 }

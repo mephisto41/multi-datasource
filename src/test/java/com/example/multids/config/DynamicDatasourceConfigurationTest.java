@@ -31,8 +31,8 @@ class DynamicDatasourceConfigurationTest {
         MultiDataSourceRegistry registry = configuration.multiDataSourceRegistry(properties, p -> new StubDataSource(), (d, q) -> true);
 
         assertEquals(2, registry.datasources().size());
-        assertEquals("one", registry.getRequired("one").getName());
-        assertEquals("two", registry.getRequired("two").getName());
+        assertEquals("one", registry.datasources().get("one").getName());
+        assertEquals("two", registry.datasources().get("two").getName());
         assertEquals(List.of("one", "two"), registry.datasources().keySet().stream().toList());
     }
 

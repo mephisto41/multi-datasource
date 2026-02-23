@@ -3,18 +3,18 @@
 Dynamic multi-datasource routing for Spring Boot with:
 - ordered failover across named datasources
 - unhealthy marking on connection-borrow failure
-- background auto-heal/replacement
+- on-demand heal/replacement when no datasource is currently available
 
 ## How It Works
 
 1. `HealingRoutingDataSource` selects the first datasource marked healthy (in configured order).
 2. `ManagedDataSource` marks itself unhealthy when `getConnection(...)` fails.
 3. Caller retries the operation; the next retry routes to the next healthy datasource.
-4. `DataSourceAutoHealer` periodically probes/recreates unhealthy datasources.
+4. If none are marked healthy, routing attempts to heal all datasources once and retries.
 
 Notes:
 - Routing exhaustion is surfaced as `SQLException("No healthy datasource available")`.
-- Failover is caller-driven (no internal multi-attempt loop in routing).
+- Failover is caller-driven for borrow failures; routing has one internal heal-and-retry only when none are healthy.
 
 ## Configuration
 
@@ -22,7 +22,6 @@ Configure datasources under `app.datasources`:
 
 ```yaml
 app:
-  auto-heal-delay-ms: 5000
   datasources:
     primary:
       url: jdbc:postgresql://localhost:5432/app
@@ -86,7 +85,6 @@ Why this pattern:
 - `src/main/java/com/example/multids/config/DynamicDatasourceConfiguration.java`
 - `src/main/java/com/example/multids/routing/HealingRoutingDataSource.java`
 - `src/main/java/com/example/multids/datasource/ManagedDataSource.java`
-- `src/main/java/com/example/multids/datasource/health/DataSourceAutoHealer.java`
 
 ## Integration Test
 

@@ -42,18 +42,22 @@ class HealingRoutingDataSourceIntegrationTest {
 
     @Test
     void routesAcrossThreeDatasourcesWhenPrimaryFailsAndHeals() throws Exception {
-        assertEquals("primary", querySourceName(routingDataSource));
-        assertEquals("primary", querySourceName(registry.getRequired("primary")));
-        assertEquals("reporting", querySourceName(registry.getRequired("reporting")));
-        assertEquals("analytics", querySourceName(registry.getRequired("analytics")));
+        ManagedDataSource primary = registry.datasources().get("primary");
+        ManagedDataSource reporting = registry.datasources().get("reporting");
+        ManagedDataSource analytics = registry.datasources().get("analytics");
 
-        HikariDataSource primaryDelegate = (HikariDataSource) registry.getRequired("primary").current();
+        assertEquals("primary", querySourceName(routingDataSource));
+        assertEquals("primary", querySourceName(primary));
+        assertEquals("reporting", querySourceName(reporting));
+        assertEquals("analytics", querySourceName(analytics));
+
+        HikariDataSource primaryDelegate = (HikariDataSource) primary.current();
         primaryDelegate.close();
 
         assertThrows(SQLException.class, () -> querySourceName(routingDataSource));
         assertEquals("reporting", querySourceName(routingDataSource));
 
-        assertTrue(registry.getRequired("primary").healIfNeeded());
+        assertTrue(primary.healIfNeeded());
         assertEquals("primary", querySourceName(routingDataSource));
     }
 

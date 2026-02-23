@@ -2,7 +2,6 @@ package com.example.multids.datasource;
 
 import com.example.multids.config.properties.SingleDatasourceProperties;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -10,19 +9,11 @@ import org.junit.jupiter.api.Test;
 class MultiDataSourceRegistryTest {
 
     @Test
-    void returnsDatasourceWhenPresent() {
+    void exposesDatasourcesMap() {
         ManagedDataSource managed = new ManagedDataSource("x", new SingleDatasourceProperties(), p -> new StubDataSource(), (d, q) -> true);
         MultiDataSourceRegistry registry = new MultiDataSourceRegistry(Map.of("x", managed));
 
-        assertEquals(managed, registry.getRequired("x"));
-    }
-
-    @Test
-    void throwsWhenDatasourceMissing() {
-        MultiDataSourceRegistry registry = new MultiDataSourceRegistry(Map.of());
-
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> registry.getRequired("none"));
-        assertEquals("Unknown datasource: none", ex.getMessage());
+        assertEquals(managed, registry.datasources().get("x"));
     }
 
     private static final class StubDataSource implements javax.sql.DataSource {

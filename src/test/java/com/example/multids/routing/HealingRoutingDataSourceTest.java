@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.sql.Connection;
@@ -143,6 +145,39 @@ class HealingRoutingDataSourceTest {
 
         SQLException exhausted = assertThrows(SQLException.class, routing::getConnection);
         assertEquals("No healthy datasource available", exhausted.getMessage());
+        verify(primary, times(1)).healIfNeeded();
+        verify(reporting, times(1)).healIfNeeded();
+    }
+
+    @Test
+    void getConnectionHealsOnDemandWhenAllDatasourcesAreMarkedUnhealthy() throws Exception {
+        ManagedDataSource primary = mock(ManagedDataSource.class);
+        ManagedDataSource reporting = mock(ManagedDataSource.class);
+        AtomicBoolean primaryHealthy = new AtomicBoolean(false);
+        Connection primaryConnection = mock(Connection.class);
+
+        when(primary.isMarkedHealthy()).thenAnswer(i -> primaryHealthy.get());
+        when(primary.healIfNeeded()).thenAnswer(i -> {
+            primaryHealthy.set(true);
+            return true;
+        });
+        when(primary.getConnection()).thenReturn(primaryConnection);
+
+        when(reporting.isMarkedHealthy()).thenReturn(false);
+        when(reporting.healIfNeeded()).thenReturn(false);
+
+        HealingRoutingDataSource routing = new HealingRoutingDataSource(mapOf(primary, reporting));
+        LinkedHashMap<Object, Object> targets = new LinkedHashMap<>();
+        targets.put("primary", primary);
+        targets.put("reporting", reporting);
+        routing.setTargetDataSources(targets);
+        routing.afterPropertiesSet();
+
+        Connection actual = routing.getConnection();
+
+        assertSame(primaryConnection, actual);
+        verify(primary, times(1)).healIfNeeded();
+        verify(reporting, times(1)).healIfNeeded();
     }
 
     @Test

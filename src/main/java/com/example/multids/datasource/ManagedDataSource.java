@@ -43,18 +43,8 @@ public class ManagedDataSource implements DataSource {
         return delegate.get();
     }
 
-    public boolean isHealthy() {
-        return refreshHealth();
-    }
-
     public boolean isMarkedHealthy() {
         return healthy;
-    }
-
-    public boolean refreshHealth() {
-        boolean latestHealth = healthStrategy.isHealthy(current(), properties.getValidationQuery());
-        this.healthy = latestHealth;
-        return latestHealth;
     }
 
     public void markUnhealthy() {

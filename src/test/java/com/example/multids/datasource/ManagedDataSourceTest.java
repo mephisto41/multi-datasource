@@ -49,17 +49,6 @@ class ManagedDataSourceTest {
     }
 
     @Test
-    void reportsCurrentHealth() {
-        ManagedDataSource managed = new ManagedDataSource(
-                "primary",
-                new SingleDatasourceProperties(),
-                p -> new TestDataSource(),
-                (d, q) -> true);
-
-        assertTrue(managed.isHealthy());
-    }
-
-    @Test
     void healReturnsFalseWhenRecoveredByAnotherThread() {
         SequencedHealthStrategy health = new SequencedHealthStrategy(false, true);
         ManagedDataSource managed = new ManagedDataSource(

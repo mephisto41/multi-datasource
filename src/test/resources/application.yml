@@ -1,5 +1,4 @@
 app:
-  auto-heal-delay-ms: 60000
   datasources:
     primary:
       url: jdbc:h2:mem:primarydb;DB_CLOSE_DELAY=-1

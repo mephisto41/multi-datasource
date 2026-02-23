@@ -1,5 +1,4 @@
 app:
-  auto-heal-delay-ms: 5000
   datasources:
     primary:
       url: jdbc:postgresql://localhost:5432/app
